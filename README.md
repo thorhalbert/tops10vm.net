@@ -7,3 +7,5 @@ The root of this was a port of the SIMH pdp-10 processor engine.  I make no clai
 The SIMH version I branched from was rather old, but so then is the 10 code.
 
 There's a graphical UI which shows the processor run, and there's an amusing set of modern unit tests that run 45 year old paper-tape images.
+
+This has the beginnings of the DENC language which would build encoder/decoder logic.   However, there have been modern efforts that might work better (and are more completed), like https://github.com/kaitai-io.   If all of the 36 bit words were packed into 64 bit integers, then perhaps it would be easy enough.  I think Kaitai has bit-field type operations.   
