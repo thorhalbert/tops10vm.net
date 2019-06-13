@@ -1,7 +1,7 @@
 # tops10vm.net
 TOPS-10 Emulator in .NET
 
-This was my second attempt at writing a tops-10 (and possibily tops-20) emulator, but in C# instead of C.
+This was my second attempt at writing a tops-10 (and possibily tops-20) emulator, but in C# instead of C.  The idea was to be able to run executables at the command line (in unix or cygwin).   There might be a port of the OS command processor.   I was also interested in tops-20, which is much more sophisticated, though COMND support would take a long time to support.
 
 The root of this was a port of the SIMH pdp-10 processor engine.  I only needed user-mode CPU, so I didn't port any of the IO subsystems.  I make no claims on this excellent original code.  And give full credit to Bob Supnik and others involved with the project.
 The SIMH version I branched from was rather old, but so then is the 10 code--it's been quite mature for a long time.   I also probably fixed some bugs via the KLAD diagnostics.
