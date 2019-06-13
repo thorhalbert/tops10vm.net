@@ -1,0 +1,99 @@
+﻿HOW ABOUT TAKE 3?
+
+Can we make this work with a highly diminished syntax?  
+That we can parse with regular parsing or at worst regular expressions?
+
+Let's make it look like assember
+	
+Maybe even pythonlike - the tab actually has meaning
+
+	RADIX x
+	ARCHITECTURE PDP10
+	
+	NAMESPACE x.y.x
+	
+	CLASS a
+		
+		CLASS b 
+			indent defines a.b			
+	
+	
+			LENGTH name
+			
+				identifier defined name of block
+	
+		
+	
+	name:offset (offset is optional - otherwise just skips to next word)
+		MASK name bitmask
+			MASK name bitmask
+			BIT name bitlocation
+			
+		WORD size	
+		SIXBIT size
+		ASCII size
+		ASCIZ size
+		RAD50 size
+		
+		ENUM
+			VALUE==number
+		
+		
+	
+	KEYWORDS
+		[PRIVATE] - makes the entity private so it can be encapsulated in a partial class
+		[ENUM type] - field is actually a representation of this enum
+		
+		probably other values which can constrain a getter or setter for a field.
+		
+	bitmasks
+	
+		number in octal
+		
+		LH
+		RH
+		
+		nBn shifted number (note, always relative to the shifted frame)
+		nAn shifted but to the absolute frame
+		
+	bitlocation
+	
+	CONSTANT
+	
+		need some way to easily declare enums.  have to figure out what usecases I'd be dealing with.
+		
+			
+	SWITCH field
+	
+		CASE x
+		CASE y
+		CASE ENUM x
+	
+	Where the syntax depends on some previously defined variable
+	
+	Need some way to define crosslinked data (via a pointer)
+	
+	Perhaps @namespace.class which denotes a strongly typed reference to a class of this type
+	
+	We may eventually need to do math and such
+	
+	
+ARCHITECTURE - load architecture module
+NAMESPACE - set the primary namespace
+CLASS - name of the class (can be nested)
+SIZE - Size of the memory space (can be an indirect reference)
+name:offset - name a primary memory location - specify the offset (will get an error if not correct)
+MASK - specify a bitmask
+WORD - define a word
+SIXBIT - define a sixbit text block of a given number of words
+ASCIZ - define a asciz string of a given number of words
+ASCII - define an ascii string of a given number of words/characters
+RAD50 - define a string of a given number of rad50 words
+SWITCH - make definition modal (subdefinition doesn't exist unless in that mode)
+CASE - specify mode for a switch
+
+
+[PRIVATE] - make production private
+[PROTECTED] - make production private
+[ENUM] - make defined name generate an enum
+[CONSTANT] - define a constant associated with this memory location

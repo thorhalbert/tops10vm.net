@@ -1,0 +1,212 @@
+%{ 
+/*
+ *  Parser for Denc - specifically tuned for GPPG
+ *  Process with > GPPG /gplex /no-lines gppg.y
+ */
+%}
+
+%output=Parser.Generated.cs 
+%using System.Collections;
+%using Thorsbrain.Denc.Language.Element;
+%using Thorsbrain.Denc.Language.Element.Misc;
+%using Thorsbrain.Denc.Language.Element.Programs;
+%using Thorsbrain.Denc.Language.Element.ClassParts;
+%namespace Thorsbrain.Denc.Parser
+%tokentype Token
+
+%visibility internal
+
+%partial
+%union	{
+	public DencProgram program;
+	public Architecture architecture;
+	public List<IStatement> statementlist;
+	public IStatement statement;
+	public List<string> stringlist;
+	public ClassHeir classheir;
+	public Constant constant;
+
+		public string tVal;
+		
+//		public IStatement Statement;
+//		public IExpression Expression;
+//		public List<IStatement> StatementList;
+//		public List<IExpression> ExpressionList;
+//		public List<SignatureMember> SignatureMemberList;
+//		public SignatureMember SignatureMember;
+//		public List<Identifier> IdentifierList;
+//		public List<MetaKey> NamedList;
+//		public MetaKey MetaKey;
+}
+
+%left OPENLEVEL
+%token CLOSELEVEL
+%token ENDOFLINE
+%token ENDOFFILE
+
+%token ARCHITECTURE
+%token NAMESPACE
+%token CLASS
+%token SIZE
+%token RADIX
+%token MASK
+%token WORD
+%token BYTE
+%token SIXBIT
+%token ASCIZ
+%token ASCII
+%token RAD50
+%token POINT
+%token XWD
+%token IOWD
+%token POINT
+
+%token SWITCH
+%token CASE
+
+%token PRIVATE
+%token ENUM
+%token PROTECTED
+%token CONSTANT
+
+%token RPAREN
+%token FALSE
+%token TRUE
+
+%token SEMI
+
+%token EQ
+%token NEQ
+%token GT
+%token GEQ
+%token LT
+%token LEQ
+
+%token AT
+
+%token COMMA
+%token PERIOD
+%token COLON
+
+%token <tVal> IDENTIFIER
+
+%token <tVal> CONSTANT
+%token <tVal> CONSTANT_DEC
+%token <tVal> CONSTANT_HEX
+%token <tVal> CONSTANT_OCT
+%token <tVal> CONSTANT_FLT
+%token <tVal> CONSTANT_STRING
+%token <tVal> CONSTANT_DECIMAL
+
+%nonassoc IF
+%nonassoc ELSE
+
+%right EQUAL
+
+%left NEW
+
+%left OUT
+%left REF
+
+%left OROR
+%left ANDAND
+%left PLUS MINUS EXCLAM
+%left ASTERISK SLASH PERCENT
+
+%left LPAREN
+
+%type <program> Program
+%type <architecture> Architecture
+%type <statementlist> TopLevelStatementList SubLevel
+%type <statement> TopLevelStatement NameSpace SubLevelStatement Radix Word Label SubLevelOption
+%type <stringlist> NameList
+%type <classheir> ClassDeclaration
+%type <statementlist> SubLevel
+%type <constant> Constant
+
+%%
+
+Program
+	:	Architecture							
+		TopLevelStatementList					{$$=DencMainProgram=new DencProgram($1,$2);}
+	;
+	
+Architecture
+	:	ARCHITECTURE IDENTIFIER ENDOFLINE		{$$=new Architecture($2);}
+	;
+	
+	
+TopLevelStatementList
+	:	TopLevelStatement						{$$=new List<IStatement>{$1};}
+	|	TopLevelStatementList TopLevelStatement	{$1.Add($2); $$=$1;}
+	;
+		
+TopLevelStatement
+	:	NameSpace								{$$=$1;}									
+	|	ClassDeclaration						{$$=$1;}
+	|  /* Empty */ ENDOFLINE					{$$=null;}
+	;
+	
+NameSpace
+	:	NAMESPACE  NameList ENDOFLINE			{$$=new NameSpace($2);}
+	;
+	
+NameList
+	:	IDENTIFIER								{$$=new List<string>{$1};}
+	|	NameList PERIOD IDENTIFIER				{$1.Add($3); $$=$1;}
+	;
+
+ClassDeclaration
+	:	CLASS IDENTIFIER ENDOFLINE OPENLEVEL SubLevel CLOSELEVEL
+												{$$=new ClassHeir($2,$5);}
+	;
+	
+SubLevel
+	:	SubLevelStatement						{$$=new List<IStatement>{$1};}
+	|	SubLevel SubLevelStatement				{$1.Add($2); $$=$1;}
+	;
+		
+SubLevelStatement
+	:	ClassDeclaration						{$$=$1;}
+	|	SubLevelOption							{$$=$1;}
+	|	Label									{$$=$1;}
+	|  /* Empty */ ENDOFLINE					{$$=null;}
+	;
+
+SubLevelOption
+	:	Radix									{$$=$1;}
+	|	Word
+	;
+	
+Radix
+	:	RADIX	Constant	ENDOFLINE			{$$=new SetRadix($2);}
+	;
+	
+Word
+	:	WORD	Constant	ENDOFLINE			{$$=new Word($2);}
+	;
+	
+Constant
+	:	CONSTANT								{$$=new Constant($1);}
+	;
+
+Label
+	:	IDENTIFIER COLON						{$$=new Label($1);}
+	;
+	
+/*
+	|	Byte
+	|	Iowd
+	|	Xwd
+	|	Point
+	|	Ascii
+	|	Asciz
+	|	Sixbit
+	|	Rad50
+
+
+*/
+
+
+
+%%

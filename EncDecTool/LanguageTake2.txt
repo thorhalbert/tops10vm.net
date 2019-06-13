@@ -1,0 +1,38 @@
+﻿A format decoder is essentially made of states or modes.
+
+Some modes are peers, and some are dependant or nested inside another mode.
+
+So, when given modes are extant, a given format obtains, when not, another.
+
+Things would then arrange themselves as boolean if statements or case statements.   Instead of 
+specifying program flow, they specify the interior content.   Some content may exist or not
+depending on the states that wrap them.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Now, we might need a parser to do this one...
+
+
+title name;
+namespace name;
+
+struct name {
+	address:	
+
+}

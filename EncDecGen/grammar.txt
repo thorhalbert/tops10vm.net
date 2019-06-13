@@ -1,0 +1,190 @@
+﻿Grammar for encode/decode logic.
+
+Clean slate...
+
+Start off with some compatibility for macro syntax/commands so we can just use stuff from the distributions 
+at least for the stock setup.
+
+For TOPs-10, let's start with the UUOSYM.MAC and see if we can permute this into a language.  We'll have to
+look into the universal files for TOPS-20 as well, and hopefully they'll be the same.
+
+
+===
+Old Brainstorms
+
+Still thinking about general form.   I think we'll start with a C like syntax and see if we can compress it down.
+This will be a lot of work to input to reverse engineer the systems I'd like to emulate so I should be somewhat compact.
+
+Decode logic is about modes in a heirarchy
+
+    * define a struct (named or unnamed)
+    * defining a union (though hopefully with a reduced syntax than C)
+    * naming the addressing level
+    * naming bits and having bitfields
+    * naming enumerations
+    * decode bytes
+    * decode standard things: sixbit, asciz, ascii, radix-50
+
+
+To define a mode, you have to define all of the fields that are needed to determine the mode
+
+[define addressing]
+<define mode dependancies>
+
+keywords:  struct, union, word, half, bits, bitfield, enum, bytes, writable (ro by default), signed (unsigned by default), length
+
+
+namespace tops10;
+system pdp10;
+
+publish enum calltypes {
+    lookup,
+    create,
+    supersede,
+    update,
+    rename
+}
+
+mode external bool priv;  // Has is in priv mode
+mode external calltypes calltype; // What call type are we
+
+addressblock addr;
+
+struct checkstatus, addressblock = default {
+    [rb:0] lhalf cntlw;
+}
+
+mode level 1 bool extendedMode =  checkstatus::cntlw;
+
+publish struct argBlock, addressblock=default {
+    switch extendedMode {
+        case true {
+               [addr:0] rbBlock RBBLOCK, offset=0;
+        }
+        case false {
+            switch calltype {
+                case lookup {
+                }
+                case create {
+                }
+                case supersede {
+                }
+                case update {
+                }
+                case rename {
+                }
+            }
+        }
+    }
+}
+
+struct rbBlock, length=length, addressblock=rb {
+            [rb:0] word .RBCNT {
+                lhalf cntlw;
+                bit RB.NSE=18;
+                bit RB.DSL=19;
+                bit RB.AUL=20;
+                bit RB.NLB=21;
+                bitfield length=22-36;
+             }
+
+            [rb:1] word _rbppn {
+                lhalf project,
+                rhalf programmer,
+            }
+            [rb:2] word .RBNAM, SIXBIT ;
+            [rb:3] word .RBEXTZ {
+                    lhalf extenstion, SIXBIT ;
+                    bitfield RB.CRX[18-20] =18-20;
+                    bitfield RB.ACD =21-35;
+                    rhalf errorstatus;
+
+                }
+            [rb:4] word .RBPRV {
+                    bitfield RB.PRV =0-8;
+                    bitfield RB.MOD=9-12;
+                    bitfield RB.CRT=13-23;
+                    bitfield RB.CRD[24-35]=24-35;
+            }
+            [rb:5] word .RBSIZ;
+            [rb:6] word .RBVER;
+            [rb:7] word .RBSPL;
+            [rb:10] word .RBEST;
+            [rb:11] word .RBALC;
+            [rb:12] word .RBPOS;
+            [rb:13] word .RBUFW {
+                    bitfield RB.UNI=10-17 {
+                        bit drive.0 = 17;
+                        bit drive.1 = 16;
+                        bit drive.2 = 15;
+                        bit drive.3 = 14;
+                        bit drive.4 = 13;
+                        bit drive.5 = 12;
+                        bit drive.6 = 11;
+                        bit drive.7 = 10;
+                    }
+                    bitfield RB.CON=18-20 {
+                        enum controller.A=0,
+                        enum controller.B=1,
+                        enum controller.C=2,
+                        enum controller.D=3,
+                        enum controller.E=4,
+                        enum controller.F=5,
+                        enum controller.G=6,
+                        enum controller.H=7
+                    }
+                    bitfield RB.APR=21-35;
+            }
+            [rb:14] word .RBNCA;
+            [rb:15] word .RBMTA;
+            [rb:16] word .RBDEV;
+            [rb:17] word .RBSTS;
+            [rb:20] word .RBELB {
+                   bitfield RB.EVR=0-2;
+                    bit RB.ETO =3;
+                    bit RB.ETD=4;
+                    bit RB.ETS=5;
+                    bitfield RB.ETM=3-8;
+                    bitfield RB.EBN=9-35;
+                }
+            [rb:21] word .RBEUN {
+                    bitfield RB.ENB=0-8;
+                    bitfield RB.EUN=10-17;
+                    bitfield RB.EKN=18-20;
+                    bitfield RB.ECN=21-35;
+                }
+            [rb:22] word .RBQTF;
+            [rb:23] word .RBQTO;
+            [rb:24] word .RBRSZ;
+            [rb:25] word .RBFFB;
+            [rb:26] word .RBAUT;
+            [rb:30] word .RBIDT;
+            [rb:31] word .RBPCA;
+            [rb:32] word .RBUFD;
+            [rb:33] word .RBFLR;
+            [rb:34] word .RBXRA;
+            [rb:35] word .RBTIM;
+            [rb:36] word .RBLAD;
+            [rb:37] word .RBDED;
+            [rb:40-47] ASCIZ .RBACT ;
+    }
+}
+
+
+namespace namespace-ident;
+system system-ident;
+
+addressblock name;
+
+modifier declarator, option-modifier, option=value, ... { body }
+
+
+modifier = publish
+declarator = enum | struct
+type = bool | word | bit | bitfield | system-type | user-struct
+option-modifier = option     (equiv to saying option=true)
+option = offset | addressblock | system-modifier
+
+body = (address) type identifier (=subaddress), option-list {body} |  ;
+
+

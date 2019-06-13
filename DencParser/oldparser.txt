@@ -1,0 +1,242 @@
+﻿/*
+Program
+	:	StatementList						{DoStatementList=$1;}
+    ;
+
+Statement
+	:	AllSemiStatements	SEMI			{$$=$1;}
+	|	SEMI								{$$=null;}
+	|	UnSemiStatements					{$$=$1;}
+	;
+
+StatementList
+	:	Statement							{var lst=new List<IStatement>(); lst.Add($1); $$=lst;}
+	|	StatementList	Statement  			{if ($2!=null) $1.Add($2); $$=$1;}
+	;
+
+/*
+EmptyStatement
+	:										{$$=null;}
+	;
+	*/
+	
+AllSemiStatements
+	:	AssignmentStatement					{$$=$1;}
+	|	SetKeyStatement						{$$=$1;}
+	|	ConstraintStatement					{$$=$1;}
+	|	UsingStatement						{$$=$1;}
+	|	DeclarationStatement				{$$=$1;}
+	|	PseudoMethodSignature				{$$=$1;}
+	|	VoidedMethodInvocationStatment		{$$=$1;}
+	;
+
+/*
+EmbeddedStatement
+	:	Block								{$$=$1;}
+	|	IfThenElseStatement					{$$=$1;}
+	|	AssignmentStatement					{$$=$1;}
+	|	VoidedMethodInvocationStatment		{$$=$1;}
+	;
+*/
+	
+UnSemiStatements
+	:	Block								{$$=$1;}
+	|	IfThenElseStatement					{$$=$1;}
+	;	
+
+ConstraintStatement
+	:	METACONSTRAINT ConstraintElement COMMA ConstraintElement COMMA ConstraintElement COMMA ConstraintElement 
+											{$$=new MetaConstraint($2,$4,$6,$8);}
+	;
+
+ConstraintElement
+	:	Expression							{$$=$1;}
+	|										{$$=null;}
+	;
+
+VoidedMethodInvocationStatment
+	:	MethodInvocation 					{$$=new VoidedInvocation((MethodInvocation) $1);}
+	;
+
+MethodInvocation
+	:	ComplexIdentifier LPAREN RPAREN			{$$=new MethodInvocation((Identifier)$1,null,false);}
+	|	ComplexIdentifier LPAREN ArgumentList RPAREN	{$$=new MethodInvocation((Identifier)$1,$3,false);} 
+	|	NEW ComplexIdentifier LPAREN RPAREN			{$$=new MethodInvocation((Identifier)$2,null,true);}
+	|	NEW ComplexIdentifier LPAREN ArgumentList RPAREN	{$$=new MethodInvocation((Identifier)$2,$4,true);} 
+	;
+
+UsingStatement
+	:	METAUSING ComplexIdentifier 		{$$=new MetaUsing(null,(Identifier)$2,null);}
+	|	METAUSING ComplexIdentifier EQUAL ComplexIdentifier 
+								{$$=new MetaUsing((Identifier)$2,(Identifier)$4,null);}
+	|	METAUSING ComplexIdentifier LPAREN ComplexIdentifier RPAREN 
+								{$$=new MetaUsing(null,(Identifier)$2,(Identifier)$4);}
+	|	METAUSING ComplexIdentifier EQUAL ComplexIdentifier LPAREN ComplexIdentifier RPAREN 
+								{$$=new MetaUsing((Identifier)$2,(Identifier)$4,(Identifier)$6);}
+	;
+	
+DeclarationStatement
+	:	METADECLARE ComplexIdentifier VariableList  {$$=new MetaDeclare((Identifier) $2, $3, DeclarationType.ClassMember);}
+	|	METADIALOGVARIABLE ComplexIdentifier VariableList  {$$=new MetaDeclare((Identifier) $2, $3, DeclarationType.DialogVariable);}
+	;
+
+VariableList
+	:	ComplexIdentifier				{var id=new List<Identifier>(); id.Add((Identifier) $1); $$=id;}
+	|	VariableList COMMA ComplexIdentifier		{$1.Add((Identifier) $3);$$=$1;}
+	;
+
+SetKeyStatement
+	:	METASETKEY	ComplexIdentifier 		{$$=new MetaSetKey((Identifier) $2, null);}
+	|	METASETKEY	ComplexIdentifier COMMA NamedSetKeyList 
+								{$$=new MetaSetKey((Identifier) $2,$4);}
+	;
+
+NamedSetKeyList
+	:	NamedArgument					{var lst = new List<MetaKey>(); lst.Add($1); $$=lst;}
+	|	NamedSetKeyList	COMMA	NamedArgument		{$1.Add($3); $$=$1;}
+	;
+
+NamedArgument
+	:	ComplexIdentifier EQUAL Expression		{$$=new MetaKey(((Identifier)$1).Variable,$3);}
+	|	Expression					{$$=new MetaKey(null,$1);}
+	;
+
+ArgumentList
+	:	ModSigOrExpression				{var exp=new List<IExpression>(); exp.Add($1); $$=exp;}
+	|	ArgumentList	COMMA	ModSigOrExpression	{$1.Add($3); $$=$1;}
+	;
+
+ModSigOrExpression
+	:	Expression					{$$=$1;}
+	|	OUT ComplexIdentifier				{$$=new ByReference(SignatureModifiers.Out,$2);}
+	|	REF ComplexIdentifier				{$$=new ByReference(SignatureModifiers.Ref,$2);}
+	;
+
+Block
+	:	METAOPENBRACE	StatementList	METACLOSEBRACE	 
+								{$$=new Block($2);}
+	;
+
+IfThenElseStatement
+	:	IF LPAREN Expression RPAREN Statement ELSE Statement 
+								{$$=new IfThenElse($3,$5,$7);}
+	|	IF LPAREN Expression RPAREN Statement  
+								{$$=new IfThenElse($3,$5,null);}
+	;
+
+PseudoMethodSignature
+	:	METASIGNATURE 				{$$=new PseudoSignature();}
+	|	METASIGNATURE	TypedSignatureList 		{$$=new PseudoSignature($2);}
+	;
+
+TypedSignatureList
+	:	TypedSignature					{var tsl=new List<SignatureMember>(); tsl.Add($1); $$=tsl;}
+	|	TypedSignatureList COMMA  TypedSignature	{$1.Add($3); $$=$1;}
+	;
+
+TypedSignature
+	:	OUT ComplexIdentifier ComplexIdentifier 	{$$=new SignatureMember(SignatureModifiers.Out, (Identifier) $2, (Identifier) $3);}
+	|	REF ComplexIdentifier ComplexIdentifier 	{$$=new SignatureMember(SignatureModifiers.Ref, (Identifier) $2, (Identifier) $3);}
+	|	ComplexIdentifier ComplexIdentifier		{$$=new SignatureMember((Identifier) $1, (Identifier) $2);}
+	;
+
+AssignmentStatement
+	:	Assignment					{$$=$1;}
+	;
+
+Assignment
+	:	ComplexIdentifier EQUAL Expression		{$$=new Assignment((Identifier) $1, $3);}
+	;
+
+ComplexIdentifier
+	:	IDENTIFIER					{$$=new Identifier($1);}
+	|	ComplexIdentifier PERIOD IDENTIFIER		{var id=(Identifier) $1; id.AddDot($3); $$=id;}
+	;
+
+PrimaryExpression
+	:	ParenthesizedExpression				{$$=$1;}
+	|	NonParenthesizedExpression			{$$=$1;}
+	;
+
+ParenthesizedExpression
+	:	LPAREN	Expression RPAREN			{$$=$2;}
+	;
+
+NonParenthesizedExpression
+	:	Literal						{$$=$1;}
+//	|	Invocation
+	;
+
+Literal
+	:	BooleanLiteral					{$$=$1;}
+	|	CONSTANT_DEC					{$$=new Constant($1,ConstantType.Int);}
+	|	CONSTANT_HEX					{$$=new Constant($1,ConstantType.Hex);}
+	|	CONSTANT_STRING					{$$=new Constant($1,ConstantType.String);}
+	|	CONSTANT_FLT					{$$=new Constant($1,ConstantType.Float);}
+	|	CONSTANT_DECIMAL				{$$=new Constant($1,ConstantType.Decimal);}
+	;
+
+BooleanLiteral
+	:	TRUE						{$$=new Constant(true,ConstantType.Bool);}
+	|	FALSE						{$$=new Constant(false,ConstantType.Bool);}
+	;
+
+PostfixExpression	
+	:	PrimaryExpression				{$$=$1;}
+	|	ComplexIdentifier				{$$=$1;}
+	;
+
+UnaryExpressionNotPlusMinus
+	:	PostfixExpression				{$$=$1;}
+	|	MethodInvocation				{$$=$1;}
+/*	|  	Casting*/
+	;
+
+UnaryExpression
+	:	UnaryExpressionNotPlusMinus			{$$=$1;}
+	|	PLUS	UnaryExpression				{$$=new UnaryExpression(UnaryExpressionOperators.Positive, $2);}
+	|	MINUS	UnaryExpression				{$$=new UnaryExpression(UnaryExpressionOperators.Negative, $2);}
+	|	EXCLAM	UnaryExpression				{$$=new UnaryExpression(UnaryExpressionOperators.BooleanNot, $2);}
+	;
+
+MultiplicativeExpression
+	:	UnaryExpression					{$$=$1;}
+	|	MultiplicativeExpression ASTERISK	UnaryExpression	 {$$=new BinaryExpression($1,BinaryExpressionOperators.Multiply,$3);}
+	|	MultiplicativeExpression SLASH		UnaryExpression	{$$=new BinaryExpression($1,BinaryExpressionOperators.Divide,$3);}
+	|	MultiplicativeExpression PERCENT	UnaryExpression	{$$=new BinaryExpression($1,BinaryExpressionOperators.Remainder,$3);}
+	;
+
+AdditiveExpression
+	:	MultiplicativeExpression			{$$=$1;}
+	|	AdditiveExpression	PLUS	MultiplicativeExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.Add,$3);}
+	|	AdditiveExpression	MINUS	MultiplicativeExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.Subtract,$3);}
+	;
+
+RelationalExpression
+	:	AdditiveExpression				{$$=$1;}
+	|	RelationalExpression	LT	AdditiveExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.BooleanLess,$3);}
+	|	RelationalExpression	GT	AdditiveExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.BooleanGreater,$3);}
+	|	RelationalExpression	LEQ	AdditiveExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.BooleanLessOrEqual,$3);}
+	|	RelationalExpression	GEQ	AdditiveExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.BooleanGreaterOrEqual,$3);}
+	;
+
+EqualityExpression
+	:	RelationalExpression				{$$=$1;}
+	|	EqualityExpression	EQ	RelationalExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.BooleanEquality,$3);}
+	|	EqualityExpression	NEQ	RelationalExpression{$$=new BinaryExpression($1,BinaryExpressionOperators.BooleanNotEquality,$3);}
+	;
+
+BooleanOrExpression
+	:	EqualityExpression				{$$=$1;}
+	|	BooleanOrExpression	ANDAND	EqualityExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.BooleanAnd,$3);}
+	;
+
+BooleanAndExpression
+	:	BooleanOrExpression				{$$=$1;}
+	|	BooleanAndExpression	OROR	BooleanOrExpression {$$=new BinaryExpression($1,BinaryExpressionOperators.BooleanOr,$3);}
+	;
+
+Expression
+	:	BooleanAndExpression				{$$=$1;}
+	;
+*/

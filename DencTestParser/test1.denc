@@ -1,0 +1,16 @@
+﻿architecture PDP10
+
+namespace test1.test2.test3
+
+class iotest%
+	.first: word 1
+	.second: word 3
+	.third: word 4
+
+class fred$bill
+	radix 10
+	word 3
+	class subtest2
+		name: word 4
+	word 2
+

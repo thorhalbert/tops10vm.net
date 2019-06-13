@@ -1,0 +1,39 @@
+﻿Eventually this might become a full on emulation of the TOPS-10 shell,
+but, initially I just need a few commands to be able to:
+
+1.  Set up the CPU (probably not normal TOPS-10 commands)
+2.  Load the Diagnostic -- eventually need to load .EXE and perhaps .A10 files
+3.  Patch them (normal E and D commands) -- some of them need to be made to exit
+4.  Start them
+
+And we record the output.
+Most of them have a start line, and then will exit.  We will provide exit and error
+(usually a halt instruction) output.  This gets diffed a standard file to determine sucess.
+
+
+SET CPU /TYPE KA10   (KI10,KL10,KS10,  whatever KC10, KD10, KX10, KN10 for emulators)
+SET CPU /FLAGS set initial flags - put in exec mode, UIO mode, etc
+
+CORE x  (set core) 
+
+GET "unix_path" 
+
+need generic way to escape local filename
+
+E x
+D x y
+D/ASCII "ABCDE"
+D/SIXBIT "ABCDEF"
+D/RAD50 "ABCDEF"
+D/INSTR "INSTR AC,@ADDR(XT)"
+
+START
+START x
+
+BREAK x
+BREAK x ON VALUE:x:is:y
+
+	break 10004 on value:20002:gt:5
+	
+	x can be followed by l or r to designate halfwords
+	

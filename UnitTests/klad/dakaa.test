@@ -1,0 +1,5 @@
+﻿SET CPU/TYPE KA10
+GET ..\..\..\klad\dakaa.sav.asc
+BREAK 30010
+START
+EOF

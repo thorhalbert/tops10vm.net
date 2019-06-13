@@ -1,0 +1,105 @@
+﻿architecture PDP10
+
+namespace TOPS10.CALLI
+
+
+// ARGUMENT BLOCK FOR FILOP.
+//  !=========================================================================!
+//  !UP!                                  !           FUNCTION CODE           !
+//  !-------------------------------------------------------------------------!
+//  !                                I/O MODE                                 !
+//  !-------------------------------------------------------------------------!
+//  !                           DEVICE NAME OR UDX                            !
+//  !-------------------------------------------------------------------------!
+//  !        OUTPUT BUFFER HEADER        !        INPUT BUFFER HEADER         !
+//  !-------------------------------------------------------------------------!
+//  !      NUMBER OF OUTPUT BUFFERS      !      NUMBER OF INPUT BUFFERS       !
+//  !-------------------------------------------------------------------------!
+//  !        PTR TO RENAME BLOCK         !        PTR TO LOOKUP BLOCK         !
+//  !-------------------------------------------------------------------------!
+//  !        LENGTH OF PATH BLOCK        !         PTR TO PATH BLOCK          !
+//  !-------------------------------------------------------------------------!
+//  !           PROJECT NUMBER           !        PROGRAMMER NUMBER           !
+//  !-------------------------------------------------------------------------!
+//  !      LENGTH OF FILESPEC BLOCK      !       PTR TO FILESPEC BLOCK        !
+//  !-------------------------------------------------------------------------!
+//  !   OUTPUT BUFFER STARTING ADDRESS   !   INPUT BUFFER STARTING ADDRESS    !
+//  !-------------------------------------------------------------------------!
+//  !        OUTPUT BUFFER SIZE          !         INPUT BUFFER SIZE          !
+//  !=========================================================================!
+
+// OFFSETS IN ARGUMENT BLOCK
+
+class FILOP.
+
+	size .FOMAX
+
+	.FOFNC:0	// FUNCTION (AND FLAGS)
+		mask
+			FO.PRV==1B0	// JOB IS JACCT OR [1,2] AND WANT TO USE PRIVS
+			FO.ASC==1B1	// ASSIGN AN EXTENDED CHANNEL
+			FO.UOC==1B2	// USE ALREADY-OPEN CHANNEL
+			FO.CFW==1B3	// FUNCTION CODE IS ACTUALLY ADDRESS OF
+						// ADDRESS OF CHANNEL,,FUNCTION CODE
+			FO.CHN==777B17	// CHANNEL NUMBER
+			FO.FNC==777777B35 // FUNCTION CODE OR ADDRESS (AS ABOVE)
+	.FOIOS:1	// I/O STATUS (OPEN MODE)
+	.FODEV:2	// DEVICE
+	.FOBRH:3	// BUFFER RING HEADER POINTERS
+	.FONBF:4	// NUMBER OF BUFFER TO BUILD
+	.FOLEB:5	// PTR TO RENAME,,LOOKUP/ENTER BLOCK (SEE .RB??? SYMBOLS)
+	.FOPAT:6	// PTR TO PATH BLOCK (SEE .PT??? SYMBOLS)
+	.FOPPN:7	// (PRIVILEGED) IN-YOUR-BEHALF PPN
+	.FOFSP:10	// PTR TO FILESPEC BLOCK (SEE .FOF?? SYMBOLS)
+	.FOBSA:11	// BUFFER STARTING ADDRESSES
+		mask
+			FO.OSA==777777B17 // STARTING ADDRESS OF OUTPUT BUFFER RING
+			FO.ISA==777777B35 // STARTING ADDRESS OF INPUT BUFFER RING
+	.FOBSZ:12	// BUFFER SIZES
+		mask
+			FO.OSZ==777777B17 // SIZE OF OUTPUT BUFFERS
+			FO.ISZ==777777B35 // SIZE OF INPUT BUFFERS
+	.FOMAX:13	// LENGTH OF FILOP. BLOCK
+
+
+	// OFFSETS IN FILESPEC BLOCK RETURNED FROM FILOP. UUO
+	// THE BLOCK WILL ALWAYS BE TERMINATED BY A ZERO WORD AND MUST
+	// BE ACCOUNTED FOR IN THE WORD COUNT SUPPLIED BY THE USER.
+	.FOFND==0	// NODE NAME (RESERVED)
+	.FOFDV==1	// DEVICE
+	.FOFFN==2	// FILE NAME
+	.FOFEX==3	// EXTENSION
+	.FOFPP==4	// PPN
+	.FOFSF==5	// FIRST SFD
+	.FOFMX==.FOFSF+<.PTMAX-.PTSFD-1> // MAXIMUM LENGTH
+
+	// FUNCTION CODES
+	.FORED==1	// READ ONLY
+	.FOCRE==2	// CREATE (NEW FILE ONLY)
+	.FOWRT==3	// WRITE (CREATE OR SUPERSEDE)
+	.FOSAU==4	// SINGLE ACCESS UPDATE
+	.FOMAU==5	// MULTI-ACCESS UPDATE
+	.FOAPP==6	// APPEND
+	.FOCLS==7	// CLOSE (OPTIONAL FLAGS IN .FOIOS, SEE CL.???)
+	.FOURB==10	// UPDATE RIB
+	.FOUSI==11	// USETI
+	.FOUSO==12	// USETO
+	.FORNM==13	// RENAME
+	.FODLT==14	// DELETE
+	.FOPRE==15	// PREALLOCATE
+	.FOSIO==16	// OPEN FOR SUPER I/O
+	.FOINP==17	// INPUT
+	.FOOUT==20	// OUTPUT
+	.FOSET==21	// SETSTS
+	.FOGET==22	// GETSTS
+	.FOREL==23	// RELEASE
+	.FOWAT==24	// WAIT FOR I/O TO STOP
+	.FOSEK==25	// SEEK
+	.FORRC==26	// REWRITE RIB IF CHANGED
+	.FOGTF==27	// UGETF
+	.FOMTP==30	// MTAPE
+	.FOUTP==31	// UTPCLR
+	.FORAW==32	// RENAME WITH ALLOCATION IN WORDS
+	.FOFIL==33	// RETURN FILESPEC ASSOCIATED WITH AN OPEN CHANNEL
+	.FOFXI==34	// INPUT (EXTENDED DUMP-MODE 'BI-WORD' FORMAT)
+	.FOFXO==35	// OUTPUT (EXTENDED DUMP-MODE 'BI-WORD' FORMAT)

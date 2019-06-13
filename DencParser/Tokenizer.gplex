@@ -1,0 +1,158 @@
+/* Be careful Visual studio sticks the UTF8 header at the top and causes a syntax error here*/
+
+%using System.Collections;
+%using Thorsbrain.Denc.Language.Element;
+%namespace Thorsbrain.Denc.Parser
+%visibility internal
+%tokentype Token
+
+%option stack, minimize, parser, verbose, persistbuffer, noembedbuffers, out:Tokenizer.Generated.cs
+
+Eol             (\r\n?|\n)
+NotWh           [^ \t\r\n]
+Space           [ \t]
+Tab				[\t]
+Ident           [a-zA-Z_][a-zA-Z0-9_]*
+Number          [0-9]+
+OctDig          [0-7]
+HexDig          [0-9a-fA-F]
+HexNumber       0x{HexDig}+
+
+
+D	[0-9]
+L	[a-zA-Z_]
+RL	[a-zA-Z]
+TID	[a-zA-Z\$\.\%]
+H	[a-fA-F0-9]
+E	[Ee][\+\-]?{D}+
+P       [Pp][\+\-]?{D}+
+FS	(f|F|l|L)
+IS      ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
+M	(m|M)
+
+
+%x TheRules
+%x TheEpilog
+%x GetPath
+%x Prolog
+%x Action
+%x Comment
+%x CodeBlock
+%x ShouldBeBlank
+
+%%
+
+//"/*"							{ comment(); }
+"//"[^\n]*						{  } // Comment eater
+
+{Eol}							{return (int)Token.ENDOFLINE; }
+
+						
+"architecture"					{return (int) Token.ARCHITECTURE; }
+[cC][lL][aA][sS][sS]			{
+									return (int) Token.CLASS; }
+"namespace"						{return (int) Token.NAMESPACE; }
+
+[rR][aA][dD][iI][xX]			{return (int) Token.RADIX; }
+[aA][sS][cC][iI][iI]			{return (int) Token.ASCII; }
+[aA][sS][cC][iI][zZ]			{return (int) Token.ASCIZ; }
+[sS][iI][xX][bB][iI][tT]		{return (int) Token.SIXBIT; }
+[rR][aA][dD][iI][xX]"50"		{return (int) Token.RAD50; }
+[sS][qQ][uU][oO][zZ][eE]		{return (int) Token.RAD50; }
+
+[wW][oO][rR][dD]				{return (int) Token.WORD; }
+[bB][lL][oO][cC][kK]			{return (int) Token.WORD; }
+[bB][yY][tT]eE]					{return (int) Token.BYTE; }
+[iI][oO][wW][dD]				{return (int) Token.IOWD; }
+[xX][wW][dD]					{return (int) Token.XWD; }
+[pP][oO][iI][nN][tT]			{return (int) Token.POINT; }
+
+{RL}({TID}|{D})*				{ yylval.tVal = yytext; return CheckType(yytext);}
+"."{RL}({TID}|{D})*				{ yylval.tVal = yytext; return CheckType(yytext);}
+
+"."								{  return (int)Token.PERIOD; }
+
+":"								{return(int) Token.COLON;}
+
+"@@OPEN@@"						{return(int)Token.OPENLEVEL;}
+"@@CLOSE@@"						{return(int)Token.CLOSELEVEL;}
+
+{D}+{IS}?						{  yylval.tVal = yytext; return (int)Token.CONSTANT; }
+
+//0[xX]{H}+{IS}?					{  yylval.tVal = yytext; return (int)Token.CONSTANT_HEX; }
+//0{D}+{IS}?						{  yylval.tVal = yytext; return (int)Token.CONSTANT_OCT; }
+//{D}+{IS}?						{  yylval.tVal = yytext; return (int)Token.CONSTANT; }
+//L?'(\\.|[^\\'\n])+'				{  yylval.tVal = yytext; return (int)Token.CONSTANT; }
+
+//{D}+{E}{FS}?					{  yylval.tVal = yytext; return (int)Token.CONSTANT_FLT; }
+//{D}*"."{D}+({E})?{FS}?			{  yylval.tVal = yytext; return (int)Token.CONSTANT_FLT; }
+//{D}+"."{D}*({E})?{FS}?			{  yylval.tVal = yytext; return (int)Token.CONSTANT_FLT; }
+//0[xX]{H}+{P}{FS}?               {  yylval.tVal = yytext; return (int)Token.CONSTANT_HEX; }
+//0[xX]{H}*"."{H}+({P})?{FS}?     {  yylval.tVal = yytext; return (int)Token.CONSTANT_HEX; }
+//0[xX]{H}+"."{H}*({P})?{FS}?     {  yylval.tVal = yytext; return (int)Token.CONSTANT_HEX; }
+//{D}*"."{D}+{M}					{  yylval.tVal = yytext; return (int)Token.CONSTANT_DECIMAL; }
+//{D}+"."{D}*{M}					{  yylval.tVal = yytext; return (int)Token.CONSTANT_DECIMAL; }
+//{D}+{M}							{  yylval.tVal = yytext; return (int)Token.CONSTANT_DECIMAL; }
+
+L?\"(\\.|[^\\"\n])*\"			{  yylval.tVal = yytext; return (int)Token.CONSTANT_STRING; }
+
+/*
+
+
+
+
+//"..."			{  return (int)Token.ELLIPSIS; }
+//">>="			{  return (int)Token.RIGHT_ASSIGN; }
+//"<<="			{  return (int)Token.LEFT_ASSIGN; }
+//"+="			{  return (int)Token.ADD_ASSIGN; }
+//"-="			{  return (int)Token.SUB_ASSIGN; }
+//"*="			{  return (int)Token.MUL_ASSIGN; }
+//"/="			{  return (int)Token.DIV_ASSIGN; }
+//"%="			{  return (int)Token.MOD_ASSIGpN; }
+//"&="			{  return (int)Token.AND_ASSIGN; }
+//"^="			{  return (int)Token.XOR_ASSIGN; }
+//"|="			{  return (int)Token.OR_ASSIGN; }
+//">>"			{  return (int)Token.RIGHT_OP; }
+//"<<"			{  return (int)Token.LEFT_OP; }
+//"++"			{  return (int)Token.INC_OP; }
+//"--"			{  return (int)Token.DEC_OP; }
+//"->"			{  return (int)Token.PTR_OP; }
+"&&"			{  return (int)Token.ANDAND; }
+"||"			{  return (int)Token.OROR; }
+"<="			{  return (int)Token.LEQ; }
+">="			{  return (int)Token.GEQ; }
+"=="			{  return (int)Token.EQ; }
+"!="			{  return (int)Token.NEQ; }
+";"			{  return (int)Token.SEMI; }
+("{"|"<%")		{  return (int)Token.METAOPENBRACE; }
+("}"|"%>")		{  return (int)Token.METACLOSEBRACE; }
+","			{  return (int)Token.COMMA; }
+":"			{  return (int)Token.COLON; }
+"="			{  return (int)Token.EQUAL; }
+"("			{  return (int)Token.LPAREN; }
+")"			{  return (int)Token.RPAREN; }
+//("["|"<:")		{  return (int)Token.LBRACK; }
+//("]"|":>")		{  return (int)Token.RBRACK; }
+//"&"			{  return (int)Token.AMPERSAND; }
+"!"			{  return (int)Token.EXCLAM; }
+//"~"			{  return (int)Token.TILDE; }
+"-"			{  return (int)Token.MINUS; }
+"+"			{  return (int)Token.PLUS; }
+"*"			{  return (int)Token.ASTERISK; }
+"/"			{  return (int)Token.SLASH; }
+"%"			{  return (int)Token.PERCENT; }
+"<"			{  return (int)Token.LT; }
+">"			{  return (int)Token.GT; }
+//"^"			{  return (int)Token.UPPER; }
+//"|"			{  return (int)Token.VBAR; }
+//"?"			{  return (int)Token.QUESTION; }
+
+
+
+*/
+
+%{
+	yylloc = new QUT.Gppg.LexLocation(tokLin,tokCol,tokELin,tokECol);
+%}
+
+%%

@@ -1,0 +1,78 @@
+﻿A compressed language for specifying an instruction argument for PDP-10 operating
+systems.  This will then be used to generate a data access class for encode/decode
+logic to that argument interface.
+
+
+namespace:name of namespace
+title:name (name of class)
+word:WORDLAYOUT
+entity:name
+end
+
+
+[word]  specify the word number this starts.  
+	++ increments from previous
+	*x starts an array of x values with the same schema
+	[x] builds an array with this as element x
+	*NAME uses the value stored in NAME as a counter (if it is variable length)
+
+;  ends the translator -- if you specify another statement it is at the same 
+	address as before
+
+NAME 	name the field
+{bitfield}
+	x	x bits wide
+	x*y	array of y x bits wide
+	start:x	x bits wide starting at start
+	Mx - x is a mask  0017300 for example, width and starting are computed
+/flag
+	asciz
+	rad50	
+	sixbit	(can end in *x for that number characters -- can span words)
+,	field separator
+	priv	(make the field private- accessible within class to aid in
+		abstraction) otherwise will be a public property
+	enum	define an enumeration
+
+
+// Comment
+
+namespace:tops10.calli;
+title:GOBSTR<Return file structures in search list - CALLI 66>;
+word:pdp10;
+
+entity:ArgList;
+
+[0]	JobNumber;
+[++]	ppn;
+	project{18},programmer{18};
+[++]	FileStructureName/sixbit*6;
+[++]	DirectoryName;
+[++]	StatusBits/enum=(
+		DFGIF%=3<Filename not in sixbit>,
+		DFGPP%=6<Job number and ppn don't correspond>,
+		DFGNP%=10<Calling job not privileged>,
+		DFGLN%=12<Length of arg list is invalid>);
+
+end;
+
+., %, $ will be translated to something like Dot,Pct, Dlr, since the rest
+of the name will be UC, this won't be too bad.  One of them could own the _
+char, since that's not a common dec identifier value.
+
+Maybe _p _d _l or just lower p,d,l (of course the first letter of period/dot,
+percent, or dollar are ambiguous)
+
+Need to make context sensitive formats or variations, so that a given result
+will generate a different schema (or input type/enumeration).  Might actually
+have to give it a real expression language, and eventually put a real heavy
+duty (LALR or ANTLR) type parser behind it.
+
+This will be a bit adaptive as we set up the language for tops-10/20
+
+If we get that far, we'll look at RSTS/E, RT-11, and RSX.
+It's doubtful we'll ever do VMS, but somebody might.   This will make a great 
+platform, and maybe others will take off with this for their own beloved systems.
+How about apple-II or some such.
+
+---Thor

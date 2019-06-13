@@ -1,0 +1,59 @@
+﻿architecture _x_
+	endian big
+	endian little
+	wordsize _x_
+	align _x_
+	float _x_
+
+radix _x_
+
+namespace _x_
+
+enum
+
+class _x_
+	enum
+	word _x_ {size x}
+	sixbit _words_
+	ascii _words/bytes_
+	asciz _words/bytes_ {variable}
+	iowd
+	point
+	xwd
+	bits {overlap}
+		label: width _x_
+				mask _x_ _y_
+				lh
+				rh
+	float {type x}
+label:[absposition]
+
+	switch (variable)
+		case _x/enum_
+			stm
+				
+	if (boolvariable)
+		stm
+	else
+		stm
+		
+	alias
+		jim
+		bill
+		ted
+		alice
+
+
+	
+	
+New constructs
+
+
+alias
+
+
+
+
+
+architecture is modern or pdp10
+

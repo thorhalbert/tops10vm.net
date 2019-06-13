@@ -1,0 +1,71 @@
+﻿Binary Formats will be encoded as follows:
+
+Couple of different file formats:
+
+Old Fmt:
+
+x,,y  - octal
+
+
+A read only file
+XYZ is base64 of the address (18 bits)
+ABCDEF = The 36 bit content
+Sparse sets of data which are zero filled can be skipped
+Whitespace can be inserted after any triplet
+Files can be gzip compressed transparently (though files become read-only compressed)
+System will ignore a possible .gz extension
+
+Open will look for:
+	FILE.TXT
+	FILE.TXT.gz
+	file.txt
+	file.txt.gz
+
+#!/usr/bin/pdpvm
+:PDPVM
+:CPU=PDP10
+:OS=TOPS10
+:FORMAT=RO,BASE64
+.
+XYZ/ABCDEF
+ABCDEF
+ABCDEF
+:EOF
+
+Randomly Accessable File
+File 
+
+#!/usr/local/bin/pdpvm
+:PDPVM
+:CPU=PDP10
+:OS=TOPS10
+:CREATED=MACRO.EXE
+:FORMAT=RW,BASE64
+:WIDTH=x
+.
+ABCDEF
+ABCDEF
+ABCDEF
+:EOF
+
+7 or 8 bit ascii will just be written as a normal text file
+
+--
+Fields:
+:PDPVM		(magic number)
+:CPU=PDP10		(someday other processors - pdp-11)
+:OS=TOPS10		(possibily tops-20, multix, or its)
+:CREATED=prog	(program which wrote data)
+:CREDATE=date created
+:FILE=FILENM.EXT
+:FORMAT=RO,ENC		(RO=READONLY, RW=RANDOM ACCESSABLE)
+:WIDTH=X		(RW files must specify a width so blocks can be randomly written 60 is typical)
+.				(Begin data)
+ADR/DATAWRABCDEFABCDEFABCDEF (block beginning at ADR and 4 36-bit words)
+:EOF			(end)
+
+Most of the above fields are ignored for reading, except perhaps for launching an executable
+or differentiating between CPUs.
+
+PDPVM can be set up to handle particular file extensions, which is why than can use this
+scripting convention.   You can do a /usr/local/bin/pdpvm file also to launch--say--a compressed executable
